@@ -16,10 +16,12 @@ void ofApp::setup(){
 
     soundStream.setup(this, 0, 1, 44100, 512, 4);
     
-    soundPlayer.loadSound("gunsout.mp3");
-    soundPlayer.setVolume(0.5f);
-    soundPlayer.setMultiPlay(true);
-    soundPlayer.play();
+    neighborThresholdAdjustment = 0.0f;
+    
+//    soundPlayer.loadSound("gunsout.mp3");
+//    soundPlayer.setVolume(0.5f);
+//    soundPlayer.setMultiPlay(true);
+//    soundPlayer.play();
 }
 
 void ofApp::audioReceived(float *input, int bufferSize, int nChannels)
@@ -37,12 +39,18 @@ void ofApp::audioReceived(float *input, int bufferSize, int nChannels)
     //cout << input[0] << "\n";
 //    cout << avg << "\n";
     
-    volume = avg;
+    rawVolume = avg;
 }
 
 //--------------------------------------------------------------
 void ofApp::update()
 {
+    volumePercent = MIN(1.0f, MAX(0.0f, (log2(abs(bbInputSize/10.0f * rawVolume *1028.0f)))));
+    
+    this->spawnVolumeBasedParticles();
+    
+//    cout << "vol % = " << volumePercent << "\n";
+    
 //    ofVec2f mouseVec = getDistToCenter(mouseVec);
     ofVec2f mouseVec = getMouseToCenter();
 //    mouseVec = this->getPerpendicularVector(mouseVec);
@@ -63,6 +71,9 @@ void ofApp::update()
     for(Particle* p : particles){
         //pre-update1
         
+        p->setVolumeScale(bbInputSize/10.0f * rawVolume);
+        p->neighborThresholdAdjustment = neighborThresholdAdjustment;
+        
         ofVec2f particleToCenter = ofVec2f(p->pos - ofVec2f(ofGetWindowWidth()*0.5f, ofGetWindowHeight()*0.5f));
         ofVec2f particleVel = getPerpendicularVector(mouseRotationSpeed * addNoiseToVec(particleToCenter, 0.2f, 5.0f) * 0.05f);
         
@@ -81,7 +92,7 @@ void ofApp::update()
     }
     
     for(Particle* p : particles){
-        this->mergeIfNeeded(p, bbMergeThreshold);
+        this->mergeIfNeeded(p, bbMergeThreshold/*+(neighborThresholdAdjustment*(1.0/150.0f))*/);
     }
     
     for(Particle* p : particles){
@@ -93,7 +104,7 @@ void ofApp::update()
     // second loop
     for(Particle* p : particles){
         //pre-update2
-        this->countNeighbors(p, bbNeighborThreshold);
+        this->countNeighbors(p, (bbNeighborThreshold+neighborThresholdAdjustment));
         
         //update2
         p->postUpdate();        
@@ -123,6 +134,13 @@ void ofApp::spawnRandomParticles(int numToSpawn)
     for (int i = 0; i < numToSpawn; i++) {
         Particle* p = new Particle(10.0f, bbBlueColor, ofVec2f(ofRandomWidth(),ofRandomHeight()), bbZeroVec, bbZeroVec, bbDefaultLifetime);
         particles.push_back(p);
+    }
+}
+
+void ofApp::spawnVolumeBasedParticles()
+{
+    if (volumePercent > 0.0f) {
+        spawnRandomParticles( floor(volumePercent * 5.0f * ofRandom(1)) );
     }
 }
 
@@ -181,34 +199,46 @@ ofVec2f ofApp::getMouseToCenter()
 //--------------------------------------------------------------
 void ofApp::draw(){
     
-    float scaledVolume = 50.0f * float(bbInputSize) / 10.0f * volume;
+//    float scaledVolume = 50.0f * float(bbInputSize) / 10.0f * rawVolume;
     
 //    int r = lerpVal(ofGetBackground().r,scaledVolume,0.2f);
 //    int g = lerpVal(ofGetBackground().g,scaledVolume,0.2f);
 //    int b = lerpVal(ofGetBackground().b,scaledVolume,0.2f);
 //    ofBackground(r, g, b);
     
-    ofBackground(0);
+    ofBackground(73,71,105);
     
     ofSetColor(113,110,161,100);
     for(int i = 0; i < bbInputSize; i++) {
         float xPos = i / float(bbInputSize) * ofGetWindowWidth();
         
         float lerpedVolume = lerpVal(last2Input[i], lastInput[i], 0.5f);
-        float volHeight = bbInputSize/10.0f * lerpedVolume * ofGetWindowHeight() * 0.5f;
+        float volHeight = bbInputSize * 5.0f * lerpedVolume;
         
-        ofRect(xPos, ofGetWindowHeight(), ofGetWindowWidth()/float(bbInputSize), volHeight);
+        //float volHeight = MIN(ofGetWindowHeight()*0.1f, bbInputSize/10.0f * lerpedVolume * ofGetWindowHeight() * 0.5f);
+        
+//        cout << volHeight << "\n";
+        
+//        ofRect(xPos, ofGetWindowHeight(), ofGetWindowWidth()/float(bbInputSize), volHeight);
     }
     
     for(Particle* p : particles){
-        p->setVolumeScale(bbInputSize/10.0f * volume);
         p->draw();
     }
 }
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-    this->spawnRandomParticles(10);
+    
+    if (key == OF_KEY_SHIFT) {
+        this->spawnRandomParticles(100);
+    } else if (key == OF_KEY_UP) {
+        neighborThresholdAdjustment = MIN(neighborThresholdAdjustment + 10.0f, 500.0f);
+    } else if (key == OF_KEY_DOWN) {
+        neighborThresholdAdjustment = MAX(neighborThresholdAdjustment - 10.0f, -140.0f);
+    }
+    cout << "neighborThresholdAdjustment = " << neighborThresholdAdjustment << "\n";
+    
 }
 
 //--------------------------------------------------------------

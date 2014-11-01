@@ -54,8 +54,8 @@ void Particle::postUpdate()
 
 void Particle::draw()
 {
-    ofSetColor(col, 100);
     this->drawLinesToNeighbors();
+    ofSetColor(col, 100);
     ofCircle(pos.x, pos.y, radius);
 }
 
@@ -63,7 +63,8 @@ void Particle::drawLinesToNeighbors()
 {
     for( Particle* n : neighbors){
         float dist = (pos - n->pos).length();
-        ofSetLineWidth((bbNeighborThreshold-dist)/bbNeighborThreshold);
+        ofSetLineWidth(((bbNeighborThreshold+neighborThresholdAdjustment)-dist)/(bbNeighborThreshold+neighborThresholdAdjustment));
+        ofSetColor(col, 10);
         ofLine(pos.x, pos.y, n->pos.x, n->pos.y);
     }
 }
@@ -88,7 +89,7 @@ float Particle::lerpVal(float current, float destination, float percent)
 void Particle::setVolumeScale(float volume)
 {
     volumeScale = 1.0f + MIN(1.0f, MAX(0.0f, (log2(abs(volume*1028.0f)))));
-    cout << volume << " " << volumeScale << "\n";
+//    cout << volume << " " << volumeScale << "\n";
 }
 
 

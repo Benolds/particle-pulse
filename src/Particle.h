@@ -38,6 +38,8 @@ public:
     void addNeighbor(Particle *);
     float lerpVal(float current, float destination, float percent);
     void setVolumeScale(float volume);
+    
+    float neighborThresholdAdjustment;
 };
 
 #endif /* defined(__MAVPA__Particle__) */

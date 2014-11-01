@@ -29,6 +29,7 @@ class ofApp : public ofBaseApp{
 //        ofVec2f getPerpendicularVector(ofVec2f startVec);
 //        ofVec2f addNoiseToVec(ofVec2f baseVec, float dMult, float dAdd);
         void spawnRandomParticles(int numToSpawn);
+        void spawnVolumeBasedParticles();
         void mergeIfNeeded(Particle* p, float mergeThreshold);
     
         //audio
@@ -36,10 +37,13 @@ class ofApp : public ofBaseApp{
         void audioReceived(float *input, int bufferSize, int nChannels);
 //        void audioOut(float *output, int bufferSize, int nChannels);
 
-        float volume;
+        float rawVolume;
+        float volumePercent;
         std::vector<float> lastInput;
         std::vector<float> last2Input;
     
         ofSoundPlayer soundPlayer;
+    
+        float neighborThresholdAdjustment;
 
 };
