@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ofMain.h"
+#include "Particle.h"
 
 class ofApp : public ofBaseApp{
 	public:
@@ -19,5 +20,10 @@ class ofApp : public ofBaseApp{
 		void gotMessage(ofMessage msg);
     
     private:
-        CGPoint mousePos;
+        ofVec2f mousePos;
+        std::vector<Particle *>particles;
+        void wrapOnScreenBounds(Particle* p);
+        ofVec2f getWindowCenter();
+        ofVec2f getMouseToCenter();
+        ofVec2f addNoiseToVec(ofVec2f baseVec, float dMult, float dAdd);
 };

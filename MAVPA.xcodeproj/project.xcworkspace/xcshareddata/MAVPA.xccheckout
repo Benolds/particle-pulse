@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>2964E174-8AFA-41B8-B15E-04B30218F1BB</string>
+	<key>IDESourceControlProjectName</key>
+	<string>MAVPA</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>4A6ECC9308A0DEDC93412DB134ECE3AB88ADE9A9</key>
+		<string>github.com:Benolds/m-a-v-p-a.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>MAVPA.xcodeproj</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>4A6ECC9308A0DEDC93412DB134ECE3AB88ADE9A9</key>
+		<string>../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>github.com:Benolds/m-a-v-p-a.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>111</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>4A6ECC9308A0DEDC93412DB134ECE3AB88ADE9A9</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>4A6ECC9308A0DEDC93412DB134ECE3AB88ADE9A9</string>
+			<key>IDESourceControlWCCName</key>
+			<string>MAVPA</string>
+		</dict>
+	</array>
+</dict>
+</plist>
