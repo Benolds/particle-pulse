@@ -26,6 +26,7 @@ class ofApp : public ofBaseApp{
         void countNeighbors(Particle* p, float threshold);
         ofVec2f getWindowCenter();
         ofVec2f getMouseToCenter();
+        ofVec2f getPerpendicularVector(ofVec2f startVec);
         ofVec2f addNoiseToVec(ofVec2f baseVec, float dMult, float dAdd);
         void spawnRandomParticles(int numToSpawn);
         void mergeIfNeeded(Particle* p, float mergeThreshold);

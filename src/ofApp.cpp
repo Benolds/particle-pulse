@@ -15,6 +15,8 @@ void ofApp::setup(){
 void ofApp::update()
 {
     ofVec2f mouseVec = this->getMouseToCenter();
+//    mouseVec = this->getPerpendicularVector(mouseVec);
+    
     if ((mouseVec.x > ofGetWindowWidth()*0.5f) ||
         (mouseVec.x < ofGetWindowWidth()*-0.5f) ||
         (mouseVec.y > ofGetWindowHeight()*0.5f) ||
@@ -22,9 +24,15 @@ void ofApp::update()
         mouseVec = ofVec2f(0.0f, 0.0f);
     }
     
+    float mouseRotationSpeed = mouseVec.length() / (0.5 * ofGetWindowHeight());
+    
     for(Particle* p : particles){
         //pre-update1
-        p->vel = this->addNoiseToVec(mouseVec, 0.2f, 5.0f) * 0.05f;
+        
+        ofVec2f particleToCenter = ofVec2f(p->pos - ofVec2f(ofGetWindowWidth()*0.5f, ofGetWindowHeight()*0.5f));
+        ofVec2f particleVel = this->getPerpendicularVector(mouseRotationSpeed * this->addNoiseToVec(particleToCenter, 0.2f, 5.0f) * 0.05f);
+        
+        p->vel = particleVel; //this->addNoiseToVec(mouseVec, 0.2f, 5.0f) * 0.05f;
         
         //update1
         p->update();
@@ -58,7 +66,6 @@ void ofApp::update()
     }
     
     spawnRandomParticles(1);
-    
 }
 
 void ofApp::mergeIfNeeded(Particle *p, float mergeThreshold)
@@ -123,6 +130,11 @@ ofVec2f ofApp::getMouseToCenter()
 {
     ofVec2f windowCenter = this->getWindowCenter();
     return ofVec2f(mousePos.x - windowCenter.x, mousePos.y - windowCenter.y);
+}
+
+ofVec2f ofApp::getPerpendicularVector(ofVec2f startVec)
+{
+    return ofVec2f(startVec.y, -1 * startVec.x);
 }
 
 ofVec2f ofApp::addNoiseToVec(ofVec2f baseVec, float dMult, float dAdd){
