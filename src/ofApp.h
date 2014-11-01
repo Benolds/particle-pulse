@@ -23,7 +23,11 @@ class ofApp : public ofBaseApp{
         ofVec2f mousePos;
         std::vector<Particle *>particles;
         void wrapOnScreenBounds(Particle* p);
+        void countNeighbors(Particle* p, float threshold);
         ofVec2f getWindowCenter();
         ofVec2f getMouseToCenter();
         ofVec2f addNoiseToVec(ofVec2f baseVec, float dMult, float dAdd);
+        void spawnRandomParticles(int numToSpawn);
+        void mergeIfNeeded(Particle* p, float mergeThreshold);
+
 };

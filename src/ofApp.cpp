@@ -4,22 +4,103 @@
 void ofApp::setup(){
     srand (time(NULL));
 
-    Particle* p = new Particle(10.0f, ofColor(159,174,232), ofVec2f(100.0f,100.0f), ofVec2f(20.0f,-5.0f), ofVec2f(0.00f,0.00f));
-    particles.push_back(p);
+//    Particle* p = new Particle(10.0f, ofColor(159,174,232), ofVec2f(100.0f,100.0f), ofVec2f(0.0f,0.0f), ofVec2f(0.0f,0.0f));
+//    particles.push_back(p);
+    
+    this->spawnRandomParticles(100);
     
 }
 
 //--------------------------------------------------------------
-void ofApp::update(){
+void ofApp::update()
+{
     ofVec2f mouseVec = this->getMouseToCenter();
+    if ((mouseVec.x > ofGetWindowWidth()*0.5f) ||
+        (mouseVec.x < ofGetWindowWidth()*-0.5f) ||
+        (mouseVec.y > ofGetWindowHeight()*0.5f) ||
+        (mouseVec.y < ofGetWindowHeight()*-0.5f)) {
+        mouseVec = ofVec2f(0.0f, 0.0f);
+    }
+    
     for(Particle* p : particles){
+        //pre-update1
         p->vel = this->addNoiseToVec(mouseVec, 0.2f, 5.0f) * 0.05f;
+        
+        //update1
         p->update();
+        if ( ofRandom(p->lifetime + p->accel.length()) < 1.0f) { //p->lifetime <= 60 &&
+            //p->accel.length() < 0.05f) {
+            cout << p->accel.length() << "\n";
+            p->flagForRemoval = true;
+        }
+        
+        //post-update1
         this->wrapOnScreenBounds(p);
+    }
+    
+    for(Particle* p : particles){
+        this->mergeIfNeeded(p, 5.0f);
+    }
+    
+    for(Particle* p : particles){
+        if (p->flagForRemoval) {
+            particles.erase(std::remove(particles.begin(), particles.end(), p), particles.end());
+        }
+    }
+    
+    // second loop
+    for(Particle* p : particles){
+        //pre-update2
+        this->countNeighbors(p, 150.0f);
+        
+        //update2
+        p->postUpdate();        
+    }
+    
+    spawnRandomParticles(1);
+    
+}
+
+void ofApp::mergeIfNeeded(Particle *p, float mergeThreshold)
+{
+    if (p->flagForRemoval) { return; }
+    
+    for(Particle* n : particles){
+        if (n != p && !n->flagForRemoval) {
+            ofVec2f dPos = n->pos - p->pos;
+            if (dPos.lengthSquared() < mergeThreshold*mergeThreshold) {
+                p->flagForRemoval = true;
+                n->lifetime += p->lifetime * 0.5f;
+                //n->baseRadius += p->baseRadius * 0.5f;
+            }
+        }
     }
 }
 
-void ofApp::wrapOnScreenBounds(Particle *p){
+void ofApp::spawnRandomParticles(int numToSpawn)
+{
+    for (int i = 0; i < numToSpawn; i++) {
+        Particle* p = new Particle(10.0f, ofColor(159,174,232), ofVec2f(ofRandomWidth(),ofRandomHeight()), ofVec2f(0.0f,0.0f), ofVec2f(0.0f,0.0f), 120);
+        particles.push_back(p);
+    }
+}
+
+void ofApp::countNeighbors(Particle *p, float threshold)
+{
+    p->clearNeighbors();
+    
+    for(Particle* n : particles){
+        if (n != p) {
+            ofVec2f dPos = n->pos - p->pos;
+            if (dPos.lengthSquared() < threshold*threshold) {
+                p->addNeighbor(n);
+            }
+        }
+    }
+}
+
+void ofApp::wrapOnScreenBounds(Particle *p)
+{
     if (p->pos.x > ofGetWindowWidth()) {
         p->pos.x = 0.0f;
     } else if (p->pos.x < 0) {
@@ -54,7 +135,9 @@ ofVec2f ofApp::addNoiseToVec(ofVec2f baseVec, float dMult, float dAdd){
 //--------------------------------------------------------------
 void ofApp::draw(){
     
-    ofBackground(187, 219, 255);
+    ofBackground(255, 255, 255);
+    
+//    ofBackground(187, 219, 255);
     
 //    ofSetColor(ofColor::whiteSmoke);
 //    ofCircle(mousePos.x, mousePos.y, 100);
@@ -63,13 +146,11 @@ void ofApp::draw(){
     for(Particle* p : particles){
         p->draw();
     }
-    
-//    p.draw();
 }
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-
+    this->spawnRandomParticles(10);
 }
 
 //--------------------------------------------------------------
@@ -90,7 +171,7 @@ void ofApp::mouseDragged(int x, int y, int button){
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
-    Particle* p = new Particle(10.0f, ofColor(159,174,232), ofVec2f(x,y), ofVec2f(20.0f,-5.0f), ofVec2f(0.00f,0.00f));
+    Particle* p = new Particle(10.0f, ofColor(159,174,232), ofVec2f(x,y), ofVec2f(0.0f,0.0f), ofVec2f(0.0f,0.0f), 120);
     particles.push_back(p);
 }
 
