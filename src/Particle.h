@@ -23,6 +23,7 @@ public:
     int lifetime;
     int baseLifetime;
     bool flagForRemoval;
+    float volumeScale;
     
 //    Particle();
     Particle(float i_radius, ofColor i_col, ofVec2f i_pos, ofVec2f i_vel, ofVec2f i_accel, int i_lifetime);
@@ -35,8 +36,8 @@ public:
     int numNeighbors;
     void clearNeighbors();
     void addNeighbor(Particle *);
-    
-    float lerp(float current, float destination, float percent);
+    float lerpVal(float current, float destination, float percent);
+    void setVolumeScale(float volume);
 };
 
 #endif /* defined(__MAVPA__Particle__) */

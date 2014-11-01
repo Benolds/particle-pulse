@@ -26,9 +26,20 @@ class ofApp : public ofBaseApp{
         void countNeighbors(Particle* p, float threshold);
         ofVec2f getWindowCenter();
         ofVec2f getMouseToCenter();
-        ofVec2f getPerpendicularVector(ofVec2f startVec);
-        ofVec2f addNoiseToVec(ofVec2f baseVec, float dMult, float dAdd);
+//        ofVec2f getPerpendicularVector(ofVec2f startVec);
+//        ofVec2f addNoiseToVec(ofVec2f baseVec, float dMult, float dAdd);
         void spawnRandomParticles(int numToSpawn);
         void mergeIfNeeded(Particle* p, float mergeThreshold);
+    
+        //audio
+        ofSoundStream soundStream;
+        void audioReceived(float *input, int bufferSize, int nChannels);
+//        void audioOut(float *output, int bufferSize, int nChannels);
+
+        float volume;
+        std::vector<float> lastInput;
+        std::vector<float> last2Input;
+    
+        ofSoundPlayer soundPlayer;
 
 };
