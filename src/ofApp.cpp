@@ -22,6 +22,9 @@ void ofApp::setup(){
 //    soundPlayer.setVolume(0.5f);
 //    soundPlayer.setMultiPlay(true);
 //    soundPlayer.play();
+    
+    counter = 0;
+//    volumeHistory.resize(bbVolumeHistoryLength);
 }
 
 void ofApp::audioReceived(float *input, int bufferSize, int nChannels)
@@ -46,6 +49,32 @@ void ofApp::audioReceived(float *input, int bufferSize, int nChannels)
 void ofApp::update()
 {
     volumePercent = MIN(1.0f, MAX(0.0f, (log2(abs(bbInputSize/10.0f * rawVolume *1028.0f)))));
+    float volumePercentUnbounded = MAX(0.0f, (log2(abs(bbInputSize/10.0f * rawVolume * 1028.0f))));
+    
+    if (counter < bbVolumeHistoryLength) {
+        counter++;
+    } else {
+//        counter = 0;
+//        volumeHistory.clear();
+        volumeHistory.erase(volumeHistory.begin());
+    }
+    volumeHistory.push_back(volumePercentUnbounded);
+    
+    // calculate max volume value //TODO: speedup
+    maxVol = 0;
+    scaleFactor = 1.0f;
+    for(int i = 0; i < counter; i++) {
+        if (volumeHistory[i] > maxVol) {
+            maxVol = volumeHistory[i];
+        }
+    }
+    if (maxVol > 1.0f) {
+        scaleFactor = 1.0f / float(maxVol);
+    } else {
+        scaleFactor = 1.0f;
+    }
+    
+    volumePercent = volumePercent * scaleFactor;
     
     this->spawnVolumeBasedParticles();
     
@@ -77,7 +106,7 @@ void ofApp::update()
         ofVec2f particleToCenter = ofVec2f(p->pos - ofVec2f(ofGetWindowWidth()*0.5f, ofGetWindowHeight()*0.5f));
         ofVec2f particleVel = getPerpendicularVector(mouseRotationSpeed * addNoiseToVec(particleToCenter, 0.2f, 5.0f) * 0.05f);
         
-        p->vel = particleVel; //this->addNoiseToVec(mouseVec, 0.2f, 5.0f) * 0.05f;
+        p->vel = particleVel * MAX(0.2, MIN(1.5, particleToCenter.length()/(ofGetWindowWidth()/2))); //this->addNoiseToVec(mouseVec, 0.2f, 5.0f) * 0.05f;
         
         //update1
         p->update();
@@ -104,7 +133,7 @@ void ofApp::update()
     // second loop
     for(Particle* p : particles){
         //pre-update2
-        this->countNeighbors(p, (bbNeighborThreshold+neighborThresholdAdjustment));
+        this->countNeighbors(p, (bbNeighborThreshold+neighborThresholdAdjustment) * (1.0f + sqrt(volumePercentUnbounded)/2.0f));
         
         //update2
         p->postUpdate();        
@@ -209,6 +238,16 @@ void ofApp::draw(){
     ofBackground(73,71,105);
     
     ofSetColor(113,110,161,100);
+    
+    this->drawSnowflakeHistogram(50.0f);
+    this->drawSnowflakeHistogram(200.0f);
+    
+    this->drawHistogram(50.0f, false, true);
+    this->drawHistogram(200.0f, false, true);
+    this->drawHistogram(50.0f, true, false);
+    this->drawHistogram(200.0f, true, false);
+    
+    ofSetColor(113,110,161,100);
     for(int i = 0; i < bbInputSize; i++) {
         float xPos = i / float(bbInputSize) * ofGetWindowWidth();
         
@@ -224,6 +263,66 @@ void ofApp::draw(){
     
     for(Particle* p : particles){
         p->draw();
+    }
+    
+}
+
+void ofApp::drawHistogram(float baseHeight, bool leftToRight, bool bottomToTop)
+{
+//    if (leftToRight && bottomToTop) {
+//        for(int i = 0; i < counter; i++) {
+//            //        ofRect(xPos, ofGetWindowHeight(), ofGetWindowWidth()/float(bbInputSize), volHeight);
+//            float xPos = i / float(bbVolumeHistoryLength) * ofGetWindowWidth();
+//            float yPos = ofGetWindowHeight();
+//            float width = ofGetWindowWidth()/float(bbVolumeHistoryLength);
+//            
+//            float height = baseHeight * volumeHistory[i] * (0.9f + 0.5f * volumePercent);
+//            
+//            ofRect(xPos, yPos, width, -1*height*scaleFactor);
+//        }
+//    } else {
+//        
+        for(int i = 0; i < counter; i++) {
+            //ofRect(xPos, ofGetWindowHeight(), ofGetWindowWidth()/float(bbInputSize), volHeight);
+            
+            float xPos = i / float(bbVolumeHistoryLength) * ofGetWindowWidth();
+            if (!leftToRight) {
+                xPos = ofGetWindowWidth() - (i / float(bbVolumeHistoryLength) * ofGetWindowWidth());
+            }
+            
+            float yPos = ofGetWindowHeight();
+            if (!bottomToTop) {
+                yPos = 0;
+            }
+            float width = ofGetWindowWidth()/float(bbVolumeHistoryLength);
+            
+            float height = baseHeight * volumeHistory[i] * (0.9f + 0.5f * volumePercent);
+            if (!bottomToTop) {
+                height *= -1;
+            }
+            
+            ofRect(xPos, yPos, width, -1*height*scaleFactor);
+        }
+        
+//    }
+}
+
+void ofApp::drawSnowflakeHistogram(float baseHeight)
+{
+    for(int i = 0; i < counter; i++) {
+        //        ofRect(xPos, ofGetWindowHeight(), ofGetWindowWidth()/float(bbInputSize), volHeight);
+//        float xPos = i / float(bbVolumeHistoryLength) * ofGetWindowWidth();
+//        float yPos = ofGetWindowHeight();
+//        float width = ofGetWindowWidth()/float(bbVolumeHistoryLength);
+        
+        float height = baseHeight * volumeHistory[i] * (0.9f + 0.5f * volumePercent);
+        
+//        ofRect(xPos, yPos, width, -1*height*scaleFactor);
+        
+        float radialX = height * cos(i * 2 * PI / bbVolumeHistoryLength);
+        float radialY = height * sin(i * 2 * PI / bbVolumeHistoryLength);
+        
+        ofLine(ofGetWindowWidth()/2, ofGetWindowHeight()/2, ofGetWindowWidth()/2 + radialX, ofGetWindowHeight()/2 + radialY);
     }
 }
 
@@ -248,6 +347,9 @@ void ofApp::keyReleased(int key){
 
 //--------------------------------------------------------------
 void ofApp::mouseMoved(int x, int y){
+    
+    ofLine(mousePos.x, mousePos.y, x, y);
+    
     mousePos.x = x;
     mousePos.y = y;
 }

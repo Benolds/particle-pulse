@@ -45,5 +45,15 @@ class ofApp : public ofBaseApp{
         ofSoundPlayer soundPlayer;
     
         float neighborThresholdAdjustment;
+    
+        int counter;
+        std::vector<float>volumeHistory;
+    
+        float maxVol;
+        float scaleFactor;
+    
+        void drawSnowflakeHistogram(float baseHeight);
+        void drawHistogram(float baseHeight, bool leftToRight, bool bottomToTop);
+
 
 };

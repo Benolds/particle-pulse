@@ -19,4 +19,6 @@
 
 #define bbInputSize                 512
 
+#define bbVolumeHistoryLength         720
+
 #endif
