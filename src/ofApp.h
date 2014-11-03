@@ -54,6 +54,7 @@ class ofApp : public ofBaseApp{
     
         void drawSnowflakeHistogram(float baseHeight);
         void drawHistogram(float baseHeight, bool leftToRight, bool bottomToTop);
-
+    
+        float volumeCalibration;
 
 };

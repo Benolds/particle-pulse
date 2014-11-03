@@ -2,31 +2,26 @@
 #include "Constants.h"
 #include "Utils.h"
 
+#pragma mark - Setup
 //--------------------------------------------------------------
 void ofApp::setup(){
     srand (time(NULL));
 
-//    Particle* p = new Particle(10.0f, ofColor(159,174,232), ofVec2f(100.0f,100.0f), ofVec2f(0.0f,0.0f), ofVec2f(0.0f,0.0f));
-//    particles.push_back(p);
-    
     this->spawnRandomParticles(100);
     
-    lastInput.resize(bbInputSize);
-    last2Input.resize(bbInputSize);
-
+    // set up the audio receiver
+    lastInput.resize(bbInputSize); // volume levels from prev timestep
+    last2Input.resize(bbInputSize); // volume levels from 2 timesteps ago
     soundStream.setup(this, 0, 1, 44100, 512, 4);
     
     neighborThresholdAdjustment = -50.0f;
+    volumeCalibration = 0.5f;
     
-//    soundPlayer.loadSound("gunsout.mp3");
-//    soundPlayer.setVolume(0.5f);
-//    soundPlayer.setMultiPlay(true);
-//    soundPlayer.play();
-    
+    // for timekeeping purposes to know if volumeHistory is filled or not (also used for histogram drawing)
     counter = 0;
-//    volumeHistory.resize(bbVolumeHistoryLength);
 }
 
+#pragma mark - Audio
 void ofApp::audioReceived(float *input, int bufferSize, int nChannels)
 {
     float sum = 0.0f;
@@ -42,8 +37,10 @@ void ofApp::audioReceived(float *input, int bufferSize, int nChannels)
     //cout << input[0] << "\n";
 //    cout << avg << "\n";
     
-    rawVolume = avg;
+    rawVolume = avg * volumeCalibration;
 }
+
+#pragma mark - Update loop & particle behavior
 
 //--------------------------------------------------------------
 void ofApp::update()
@@ -54,13 +51,11 @@ void ofApp::update()
     if (counter < bbVolumeHistoryLength) {
         counter++;
     } else {
-//        counter = 0;
-//        volumeHistory.clear();
         volumeHistory.erase(volumeHistory.begin());
     }
     volumeHistory.push_back(volumePercentUnbounded);
     
-    // calculate max volume value //TODO: speedup
+    // calculate max volume value //TODO: speedup. also speedup neighbor counting
     maxVol = 0;
     scaleFactor = 1.0f;
     for(int i = 0; i < counter; i++) {
@@ -78,11 +73,11 @@ void ofApp::update()
     
     this->spawnVolumeBasedParticles();
     
-//    cout << "vol % = " << volumePercent << "\n";
+    //    cout << "vol % = " << volumePercent << "\n";
     
-//    ofVec2f mouseVec = getDistToCenter(mouseVec);
+    //    ofVec2f mouseVec = getDistToCenter(mouseVec);
     ofVec2f mouseVec = getMouseToCenter();
-//    mouseVec = this->getPerpendicularVector(mouseVec);
+    //    mouseVec = this->getPerpendicularVector(mouseVec);
     
     if ((mouseVec.x > ofGetWindowWidth()*0.5f) ||
         (mouseVec.x < ofGetWindowWidth()*-0.5f) ||
@@ -112,7 +107,7 @@ void ofApp::update()
         p->update();
         if ( ofRandom(p->lifetime + p->accel.length()) < 1.0f) { //p->lifetime <= 60 &&
             //p->accel.length() < 0.05f) {
-//            cout << p->accel.length() << "\n";
+            //            cout << p->accel.length() << "\n";
             p->flagForRemoval = true;
         }
         
@@ -139,7 +134,7 @@ void ofApp::update()
         this->countNeighbors(p, (bbNeighborThreshold+neighborThresholdAdjustment) * (1.0f + volumeAdjusted));
         
         //update2
-        p->postUpdate();        
+        p->postUpdate();
     }
     
     spawnRandomParticles(1);
@@ -205,28 +200,7 @@ void ofApp::wrapOnScreenBounds(Particle *p)
     }    
 }
 
-ofVec2f ofApp::getWindowCenter()
-{
-    return ofVec2f(ofGetWindowWidth()*0.5f, ofGetWindowHeight()*0.5f);
-}
-
-ofVec2f ofApp::getMouseToCenter()
-{
-    ofVec2f windowCenter = this->getWindowCenter();
-    return ofVec2f(mousePos.x - windowCenter.x, mousePos.y - windowCenter.y);
-}
-//
-//ofVec2f ofApp::getPerpendicularVector(ofVec2f startVec)
-//{
-//    return ofVec2f(startVec.y, -1 * startVec.x);
-//}
-//
-//ofVec2f ofApp::addNoiseToVec(ofVec2f baseVec, float dMult, float dAdd){
-//    float randMult = 1.0f + (dMult * ofRandom(-1.0f, 1.0f));
-//    float randAdd = dAdd * ofRandom(-1.0f, 1.0f);
-//    ofVec2f retVal = ofVec2f(baseVec.x * randMult + randAdd, baseVec.y * randMult + randAdd);
-//    return retVal;
-//}
+#pragma mark - Drawing
 
 //--------------------------------------------------------------
 void ofApp::draw(){
@@ -240,8 +214,6 @@ void ofApp::draw(){
     
     ofBackground(73,71,105);
     
-    
-    
     ofSetColor(113,110,161,100);
     
     this->drawSnowflakeHistogram(50.0f);
@@ -252,19 +224,19 @@ void ofApp::draw(){
 //    this->drawHistogram(50.0f, true, false);
 //    this->drawHistogram(200.0f, true, false);
     
-    ofSetColor(113,110,161,100);
-    for(int i = 0; i < bbInputSize; i++) {
-        float xPos = i / float(bbInputSize) * ofGetWindowWidth();
-        
-        float lerpedVolume = lerpVal(last2Input[i], lastInput[i], 0.5f);
-        float volHeight = bbInputSize * 5.0f * lerpedVolume;
-        
-        //float volHeight = MIN(ofGetWindowHeight()*0.1f, bbInputSize/10.0f * lerpedVolume * ofGetWindowHeight() * 0.5f);
-        
-//        cout << volHeight << "\n";
-        
-//        ofRect(xPos, ofGetWindowHeight(), ofGetWindowWidth()/float(bbInputSize), volHeight);
-    }
+//    ofSetColor(113,110,161,100);
+//    for(int i = 0; i < bbInputSize; i++) {
+//        float xPos = i / float(bbInputSize) * ofGetWindowWidth();
+//        
+//        float lerpedVolume = lerpVal(last2Input[i], lastInput[i], 0.5f);
+//        float volHeight = bbInputSize * 5.0f * lerpedVolume;
+//        
+//        //float volHeight = MIN(ofGetWindowHeight()*0.1f, bbInputSize/10.0f * lerpedVolume * ofGetWindowHeight() * 0.5f);
+//        
+////        cout << volHeight << "\n";
+//        
+////        ofRect(xPos, ofGetWindowHeight(), ofGetWindowWidth()/float(bbInputSize), volHeight);
+//    }
     
     for(Particle* p : particles){
         p->draw();
@@ -300,24 +272,59 @@ void ofApp::drawHistogram(float baseHeight, bool leftToRight, bool bottomToTop)
 void ofApp::drawSnowflakeHistogram(float baseHeight)
 {
     for(int i = 0; i < counter; i++) {
-        float height = baseHeight * volumeHistory[i] * (0.9f + 0.5f * volumePercent);
+        float height = baseHeight * volumeHistory[i]; // * (0.9f + 0.5f * volumePercent);
         float radialX = height * cos(i * 2 * PI / bbVolumeHistoryLength);
         float radialY = height * sin(i * 2 * PI / bbVolumeHistoryLength);
         ofLine(ofGetWindowWidth()/2, ofGetWindowHeight()/2, ofGetWindowWidth()/2 + radialX, ofGetWindowHeight()/2 + radialY);
     }
 }
 
+
+#pragma mark - Utils
+
+ofVec2f ofApp::getWindowCenter()
+{
+    return ofVec2f(ofGetWindowWidth()*0.5f, ofGetWindowHeight()*0.5f);
+}
+
+ofVec2f ofApp::getMouseToCenter()
+{
+    ofVec2f windowCenter = this->getWindowCenter();
+    return ofVec2f(mousePos.x - windowCenter.x, mousePos.y - windowCenter.y);
+}
+
+#pragma mark - Input
+
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
     
+    //reset to default parameters
+    if (key == OF_KEY_TAB) {
+        neighborThresholdAdjustment = -50.0f;
+        volumeCalibration = 0.5f;
+    }
+    
+    //shift spawns 100 random particles
     if (key == OF_KEY_SHIFT) {
         this->spawnRandomParticles(100);
-    } else if (key == OF_KEY_UP) {
+    }
+    
+    // up and down adjust the neighbor threshold distance
+    if (key == OF_KEY_UP) {
         neighborThresholdAdjustment = MIN(neighborThresholdAdjustment + 10.0f, 500.0f);
     } else if (key == OF_KEY_DOWN) {
         neighborThresholdAdjustment = MAX(neighborThresholdAdjustment - 10.0f, -140.0f);
     }
     cout << "neighborThresholdAdjustment = " << neighborThresholdAdjustment << "\n";
+    
+    // left and right adjust the volume calibration level
+    if (key == OF_KEY_LEFT) {
+        volumeCalibration = MAX(0.1f, volumeCalibration - 0.1f);
+    } else if(key == OF_KEY_RIGHT) {
+        volumeCalibration = MIN(2.0f, volumeCalibration + 0.1f);
+    }
+    
+    cout << "volumeCalibration = " << volumeCalibration << "\n";
     
 }
 
